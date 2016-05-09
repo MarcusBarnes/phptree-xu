@@ -12,6 +12,13 @@
 // directory to mimic tree -XU output on
 $target_directory = trim($argv[1]);
 
+//print_r(scandir($target_directory));
+//echo pathinfo($target_directory, PATHINFO_BASENAME) . PHP_EOL;
+//echo dirname($target_directory) .  PHP_EOL;
+//print_r(directoryXML($target_directory));
+//echo PHP_EOL;
+//exit();
+
 /*  Example tree -XU output:
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -61,7 +68,7 @@ foreach ($iterator as $fileinfo) {
     $tempxmlelement = null;
     
     if($fileinfo->isDir() && includeBasename($basename)){
-        echo $message . " is a directory with basename $basename "  . PHP_EOL;
+        //echo $message . " is a directory with basename $basename "  . PHP_EOL;
         $basename = basename($directory_path); 
         $xmlstring .= "<directory name='". $basename . "'/>\n";
         $directories = trackDirectories($directory_path, $basename );
@@ -92,6 +99,55 @@ function parentDirectChildFromDirectoryPaths($directory_path, $directories) {
     
     return $parentChildrenMap;
 
+}
+
+
+
+/** 
+ * Recursively create XML string of directory structure/
+ * Based on psuedo-code from http://stackoverflow.com/a/15096721/850828
+ */
+function directoryXML($directory_path) {
+    
+    //  basenames to exclude.
+    $exclude_array = array('..', '.DS_Store', 'Thumbs.db', '.');
+    
+    $dir_name = basename($directory_path);
+    $xml = "<dir name='" . $dir_name . "'>" . "\n";
+    
+    $pathbase = pathinfo($directory_path, PATHINFO_BASENAME);
+    //xml := "<dir name='" + path + "'>"
+
+    //dirInfo := GetDirectoryInfo(path)
+    $stuffindirectory = scandir($directory_path);
+    
+    foreach($stuffindirectory as $subdirOrfile){
+        
+        //for each file in dirInfo.Files
+        //    xml += "<file name='" + file.Name + "' />"
+        //end for
+        $subdirOrfilepath = $directory_path . DIRECTORY_SEPARATOR  . $subdirOrfile;
+        
+        if(!in_array($subdirOrfile, $exclude_array) && is_file($subdirOrfilepath)){
+          $xml .= "<file name='". $subdirOrfile . "' />" . "\n";
+        
+        }
+    
+        //for each subDir in dirInfo.Directories
+        //    xml += GetDirectoryXml(subDir.Path)
+        //end for
+        if(!in_array($subdirOrfile, $exclude_array) && is_dir($subdirOrfilepath)){
+            $xml .= directoryXML($subdirOrfilepath);        
+        }
+        
+    
+    }
+
+    //xml += "</dir>"
+    $xml .= "</dir>";
+
+    return $xml;
+//end function
 }
 
 //print_r($xmlstring);
